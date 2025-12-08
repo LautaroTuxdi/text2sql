@@ -1,0 +1,38 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	router(router)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> router;
+	router -.-> sql_agent\3a__start__;
+	router -.-> web_agent\3a__start__;
+	sql_agent\3a__end__ -. &nbsp;end&nbsp; .-> __end__;
+	sql_agent\3a__end__ -.-> web_agent\3a__start__;
+	web_agent\3a__end__ --> __end__;
+	subgraph sql_agent
+	sql_agent\3a__start__(<p>__start__</p>)
+	sql_agent\3aagent(agent)
+	sql_agent\3atools(tools)
+	sql_agent\3a__end__(<p>__end__</p>)
+	sql_agent\3a__start__ --> sql_agent\3aagent;
+	sql_agent\3aagent -.-> sql_agent\3a__end__;
+	sql_agent\3aagent -.-> sql_agent\3atools;
+	sql_agent\3atools --> sql_agent\3aagent;
+	end
+	subgraph web_agent
+	web_agent\3a__start__(<p>__start__</p>)
+	web_agent\3aagent(agent)
+	web_agent\3atools(tools)
+	web_agent\3a__end__(<p>__end__</p>)
+	web_agent\3a__start__ --> web_agent\3aagent;
+	web_agent\3aagent -.-> web_agent\3a__end__;
+	web_agent\3aagent -.-> web_agent\3atools;
+	web_agent\3atools --> web_agent\3aagent;
+	end
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

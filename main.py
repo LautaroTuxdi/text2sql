@@ -31,7 +31,7 @@ def main():
             # Stream the output to see the steps
             for event in app.stream(initial_state):
                 for key, value in event.items():
-                    # print(f"Finished Node: {key}")
+                    print(f"Finished Node: {key}")
                     pass
             
             # Get the final result from the last state

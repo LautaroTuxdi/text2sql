@@ -1,85 +1,74 @@
 from langgraph.graph import StateGraph, END, START
 from state import AgentState
 from nodes import (
-    query_analyzer,
-    sql_generator,
-    sql_executor_validator,
-    web_searcher,
-    final_synthesizer
+    router_node,
+    sql_agent_graph,
+    web_agent_graph
 )
 
 # --- Conditional Edges ---
 
-def route_query(state: AgentState):
+def route_from_router(state: AgentState):
     """
-    Decides where to route after analysis.
+    Decides where to route based on the Router's decision.
     """
-    # The analyzer returns a message with the classification
-    last_message = state['messages'][-1]
-    if "DATABASE" in last_message:
-        return "sql_generator"
-    else:
-        return "web_searcher"
-
-def check_sql_validity(state: AgentState):
-    """
-    Checks the result of the SQL execution.
-    """
-    sql_result = state.get('sql_result')
-    iterations = state.get('iterations', 0)
+    messages = state['messages']
+    last_message = messages[-1].content
     
-    if sql_result == "ERROR":
-        if iterations >= 3: # Prevent infinite loops
-            return "web_searcher"
-        return "sql_generator" # Loop back to fix
-    elif sql_result == "EMPTY_SET":
-        return "web_searcher" # Fallback to web
+    if "DATABASE" in last_message:
+        return "sql_agent"
     else:
-        return "final_synthesizer" # Success
+        return "web_agent"
+
+def route_from_sql(state: AgentState):
+    """
+    Decides what to do after the SQL agent finishes.
+    Implements the Agentic Fallback: If NO_DATA_FOUND, go to Web.
+    """
+    messages = state['messages']
+    last_message = messages[-1]
+    print(f"DEBUG: Last message from SQL Agent: {last_message.content}")
+    
+    if "NO_DATA_FOUND" in last_message.content:
+        return "web_agent"
+    else:
+        return END
 
 # --- Graph Construction ---
 
 workflow = StateGraph(AgentState)
 
 # Add Nodes
-workflow.add_node("query_analyzer", query_analyzer)
-workflow.add_node("sql_generator", sql_generator)
-workflow.add_node("sql_executor_validator", sql_executor_validator)
-workflow.add_node("web_searcher", web_searcher)
-workflow.add_node("final_synthesizer", final_synthesizer)
+# We mount the compiled subgraphs directly as nodes
+workflow.add_node("router", router_node)
+workflow.add_node("sql_agent", sql_agent_graph)
+workflow.add_node("web_agent", web_agent_graph)
 
 # Add Edges
-workflow.add_edge(START, "query_analyzer")
+workflow.add_edge(START, "router")
 
-# Conditional Edge from Analyzer
+# Conditional Edge from Router
 workflow.add_conditional_edges(
-    "query_analyzer",
-    route_query,
+    "router",
+    route_from_router,
     {
-        "sql_generator": "sql_generator",
-        "web_searcher": "web_searcher"
+        "sql_agent": "sql_agent",
+        "web_agent": "web_agent"
     }
 )
 
-# Edge from Generator to Executor
-workflow.add_edge("sql_generator", "sql_executor_validator")
-
-# Conditional Edge from Executor
+# Conditional Edge from SQL Agent (Fallback Logic)
 workflow.add_conditional_edges(
-    "sql_executor_validator",
-    check_sql_validity,
+    "sql_agent",
+    route_from_sql,
     {
-        "sql_generator": "sql_generator",
-        "web_searcher": "web_searcher",
-        "final_synthesizer": "final_synthesizer"
+        "web_agent": "web_agent",
+        "end": END
     }
 )
 
-# Edge from Web Searcher to Synthesizer
-workflow.add_edge("web_searcher", "final_synthesizer")
-
-# Edge from Synthesizer to END
-workflow.add_edge("final_synthesizer", END)
+# Edge from Web Agent to END
+workflow.add_edge("web_agent", END)
 
 # Compile the graph
 app = workflow.compile()
