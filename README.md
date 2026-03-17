@@ -1,5 +1,17 @@
 # Agente Text2SQL — Setup rápido
 
+## Consigna elegida
+
+Elegimos la consigna 2: Agente(s) text2SQL de asistencia a clientes - - -
+Dada una base de datos de una empresa (por ej., ventas, inventario, clientes, reviews), desarrollar un agente que pueda traducir consultas en lenguaje natural de clientes, a una (o más) consultas SQL/tablas, cuyos resultados luego deben ensamblarse para responder al cliente.
+La interfaz puede diseñarse como un chatbot unificado, que internamente puede conectar en forma flexible a más de un agente o fuente de conocimiento. Algunas de estas fuentes de conocimiento podrían incluir búsqueda web.
+Se recomienda incluir un agente "ruteador" que direccione las distintas consultas.
+
+## Participantes
+
+- Defelippe Lautaro
+- Defelippe Fabricio
+
 Este repositorio monta un flujo multi-agente (router → SQL agent → Web agent) usando `langgraph`.
 
 Requisitos
