@@ -68,19 +68,24 @@ def verificar_claves():
 def ejecutar_debug(initial_state: dict) -> dict:
     """Modo debug: muestra la actividad interna de cada nodo en tiempo real."""
     console.print()
+    final_state = {**initial_state, "messages": list(initial_state.get("messages", []))}
     for event in app.stream(initial_state, stream_mode="updates"):
         for nodo, valor in event.items():
             if nodo == "__end__":
                 continue
             nombre = NOMBRES_NODOS.get(nodo, nodo)
             console.print(f"[nodo]▶  Nodo:[/nodo] {nombre}")
-            if isinstance(valor, dict) and "messages" in valor:
-                for msg in valor["messages"]:
-                    contenido = getattr(msg, "content", str(msg))
-                    tipo = type(msg).__name__
-                    console.print(f"   [debug][{tipo}][/debug] {contenido[:300]}")
-    # invoke para obtener el estado final completo
-    return app.invoke(initial_state)
+            if isinstance(valor, dict):
+                if "messages" in valor:
+                    final_state["messages"].extend(valor["messages"])
+                    for msg in valor["messages"]:
+                        contenido = getattr(msg, "content", str(msg))
+                        tipo = type(msg).__name__
+                        console.print(f"   [debug][{tipo}][/debug] {contenido[:300]}")
+                for k, v in valor.items():
+                    if k != "messages":
+                        final_state[k] = v
+    return final_state
 
 
 def ejecutar_produccion(initial_state: dict) -> dict:

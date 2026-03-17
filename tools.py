@@ -35,12 +35,14 @@ def run_sql_query(query: str) -> str:
         cursor = conn.cursor()
         cursor.execute(first_stmt)
         results = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description] if cursor.description else []
         conn.close()
 
         if not results:
             return "NO_DATA_FOUND"
 
-        return str(results)
+        rows = [dict(zip(columns, row)) for row in results]
+        return str(rows)
     except sqlite3.Error as e:
         return f"SQL Error: {str(e)}"
 

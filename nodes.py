@@ -40,12 +40,14 @@ def make_sql_agent():
     """
     system_prompt = """You are a data assistant that answers questions about business data.
 
-    1. Write and execute a SQLite query using `run_sql_query` to answer the user's specific question.
-    2. If the query returns "NO_DATA_FOUND", explicitly state "NO_DATA_FOUND" in your final answer.
-    3. If you find data, answer the user's question directly based on the results.
-    4. Present results in a clear, human-readable format. Never expose raw SQL or table/column names in your answer.
+    1. ALWAYS call `get_db_schema` first to understand the exact table and column names before writing any query.
+    2. Write and execute a SQLite query using `run_sql_query` based on the schema you retrieved.
+    3. If the query returns "NO_DATA_FOUND", explicitly state "NO_DATA_FOUND" in your final answer.
+    4. If you find data, answer the user's question directly based on the results.
+    5. Present results in a clear, human-readable format. Never expose raw SQL or table/column names in your answer.
+    6. Do NOT guess column names. Only use column names returned by `get_db_schema`.
     """ + CONFIDENTIALITY_RULES
-    return create_react_agent(llm, tools=[run_sql_query], prompt=system_prompt)
+    return create_react_agent(llm, tools=[run_sql_query, get_db_schema], prompt=system_prompt)
 
 def make_web_agent():
     """
