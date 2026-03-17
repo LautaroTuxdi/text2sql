@@ -1,5 +1,6 @@
 from langgraph.graph import StateGraph, END, START
 from state import AgentState
+import config
 from nodes import (
     router_node,
     sql_agent_graph,
@@ -27,8 +28,9 @@ def route_from_sql(state: AgentState):
     """
     messages = state['messages']
     last_message = messages[-1]
-    print(f"DEBUG: Last message from SQL Agent: {last_message.content}")
-    
+    if config.DEBUG:
+        print(f"DEBUG: Last message from SQL Agent: {last_message.content}")
+
     if "NO_DATA_FOUND" in last_message.content:
         return "web_agent"
     else:

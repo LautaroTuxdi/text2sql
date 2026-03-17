@@ -1,5 +1,6 @@
 import sqlite3
 import re
+import config
 from langchain_core.tools import tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 from dotenv import load_dotenv
@@ -15,7 +16,8 @@ def run_sql_query(query: str) -> str:
     """
     Executes a SQLite query on the 'retail.db' database and returns the results.
     """
-    print(f"DEBUG: Executing SQL: {query}")
+    if config.DEBUG:
+        print(f"DEBUG: Executing SQL: {query}")
     try:
         # Clean up markdown if present
         query = query.replace("```sql", "").replace("```", "").strip()
@@ -48,7 +50,8 @@ def get_db_schema() -> str:
     Returns the schema of the 'retail.db' SQLite database.
     Use this to understand the table structure before writing queries.
     """
-    print("DEBUG: get_db_schema called")
+    if config.DEBUG:
+        print("DEBUG: get_db_schema called")
     conn = sqlite3.connect('retail.db')
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
