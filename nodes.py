@@ -10,11 +10,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize LLM
+# Initialize LLM (DeepSeek V3 — supports tool calling and ReAct agents)
+# NOTE: deepseek-reasoner (R1) is a thinking model that does NOT support standard
+# tool calling and will fail with create_react_agent. Use deepseek-chat instead.
 llm = ChatOpenAI(
-    base_url="https://api.groq.com/openai/v1",
-    api_key=os.environ.get("GROQ_API_KEY"),
-    model="llama-3.3-70b-versatile",
+    base_url="https://api.deepseek.com/v1",
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    model="deepseek-chat",
     temperature=0
 )
 
@@ -77,8 +79,12 @@ def router_node(state: AgentState):
     
     chain = prompt | llm | StrOutputParser()
     classification = chain.invoke({"question": question}).strip().upper()
-    
-    if classification == "DATABASE":
-        return {"messages": [SystemMessage(content=f"ROUTER_DECISION: {classification}")]}
-    
-    return {"messages": [SystemMessage(content=f"ROUTER_DECISION: {classification}")]}
+
+    # HumanMessage carries the original question so downstream agents can read it.
+    # SystemMessage carries the routing decision so route_from_router can branch.
+    return {
+        "messages": [
+            HumanMessage(content=question),
+            SystemMessage(content=f"ROUTER_DECISION: {classification}"),
+        ]
+    }

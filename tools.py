@@ -1,4 +1,5 @@
 import sqlite3
+import re
 from langchain_core.tools import tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 from dotenv import load_dotenv
@@ -18,16 +19,25 @@ def run_sql_query(query: str) -> str:
     try:
         # Clean up markdown if present
         query = query.replace("```sql", "").replace("```", "").strip()
-        
+
+        # Security: allow only a single SELECT (or WITH ... SELECT) statement.
+        parts = [p for p in re.split(r";\s*", query) if p.strip()]
+        if len(parts) > 1:
+            return "SQL Security Error: multiple statements not allowed. Only single SELECT queries are permitted."
+
+        first_stmt = parts[0]
+        if not re.match(r"^\s*(?:WITH\b|SELECT\b)", first_stmt, re.IGNORECASE):
+            return "SQL Security Error: only SELECT queries are allowed. DML/DDL statements are rejected."
+
         conn = sqlite3.connect('retail.db')
         cursor = conn.cursor()
-        cursor.execute(query)
+        cursor.execute(first_stmt)
         results = cursor.fetchall()
         conn.close()
-        
+
         if not results:
             return "NO_DATA_FOUND"
-        
+
         return str(results)
     except sqlite3.Error as e:
         return f"SQL Error: {str(e)}"

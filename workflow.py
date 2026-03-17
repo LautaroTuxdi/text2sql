@@ -63,7 +63,7 @@ workflow.add_conditional_edges(
     route_from_sql,
     {
         "web_agent": "web_agent",
-        "end": END
+        END: END
     }
 )
 
